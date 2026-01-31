@@ -3,142 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Talált Tárgyak Nyilvántartása</title>
+    <title>Nyilvántartó</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
-    
-    <style>
-        body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .navbar { background: #2c3e50; }
-        .card { border-radius: 12px; transition: transform 0.2s; }
-        .card:hover { transform: translateY(-5px); }
-        .item-id-tag { background: #e9ecef; color: #495057; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
-        #imgPreview { max-height: 200px; object-fit: contain; }
-    </style>
 </head>
-<body>
+<body class="bg-light">
+    <nav class="navbar navbar-dark bg-dark mb-4">
+        <div class="container">
+            <span class="navbar-brand">Talált Tárgyak</span>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addItemModal">Új tárgy</button>
+        </div>
+    </nav>
 
-<nav class="navbar navbar-dark shadow-sm mb-4">
     <div class="container">
-        <span class="navbar-brand mb-0 h1"><i class="bi bi-search"></i> Talált Tárgyak</span>
-        <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addItemModal">
-            <i class="bi bi-plus-lg"></i> Új bejegyzés
-        </button>
-    </div>
-</nav>
-
-<div class="container">
-    <div class="row g-3 mb-4">
-        <div class="col-md-6">
-            <input type="text" id="filterName" class="form-control" placeholder="Keresés megnevezés alapján...">
-        </div>
-        <div class="col-md-6">
-            <input type="text" id="filterLocation" class="form-control" placeholder="Szűrés helyszín szerint...">
-        </div>
+        <div class="mb-3 text-muted">Összesen: <span id="itemCount">0</span></div>
+        <div id="itemGrid" class="row row-cols-1 row-cols-md-3 g-4"></div>
     </div>
 
-    <div class="mb-3 text-muted">
-        Összesen: <span id="itemCount">0</span> talált tárgy
-    </div>
-
-    <div id="itemGrid" class="row row-cols-1 row-cols-md-3 g-4">
-        </div>
-</div>
-
-<div class="modal fade" id="addItemModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Talált tárgy rögzítése</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="addItemForm">
-                    <div class="row mb-3">
-                        <div class="col-md-12">
-                            <label class="form-label fw-bold">Megnevezés *</label>
-                            <input type="text" id="itemName" class="form-control" placeholder="pl. Férfi karóra" required>
+    <div class="modal fade" id="addItemModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <form id="addItemForm">
+                        <div class="mb-3"><label class="form-label">Megnevezés</label><input type="text" id="itemName" class="form-control" required></div>
+                        <div class="row mb-3">
+                            <div class="col-6"><label class="form-label">Márka</label><input type="text" id="itemBrand" class="form-control"></div>
+                            <div class="col-6"><label class="form-label">Anyag</label><input type="text" id="itemMaterial" class="form-control"></div>
                         </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Márka / Típus</label>
-                            <input type="text" id="itemBrand" class="form-control" placeholder="pl. Casio">
+                        <div class="row mb-3">
+                            <div class="col-6"><label class="form-label">Szín</label><input type="text" id="itemColor" class="form-control"></div>
+                            <div class="col-6"><label class="form-label">Forma</label><input type="text" id="itemShape" class="form-control"></div>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Anyag</label>
-                            <input type="text" id="itemMaterial" class="form-control" placeholder="pl. fém">
+                        <div class="row mb-3">
+                            <div class="col-8"><label class="form-label">Helyszín</label><input type="text" id="itemLocation" class="form-control" required></div>
+                            <div class="col-4"><label class="form-label">Dátum</label><input type="date" id="itemDate" class="form-control"></div>
                         </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Szín</label>
-                            <input type="text" id="itemColor" class="form-control" placeholder="pl. ezüst">
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="isEmployee" checked>
+                            <label class="form-check-label">Dolgozó találta</label>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Forma / Egyéb jellemző</label>
-                            <input type="text" id="itemShape" class="form-control" placeholder="pl. kerek">
+                        <div id="finderFields" class="d-none border p-3 rounded mb-3">
+                            <div class="mb-2"><label class="form-label">Találó neve</label><input type="text" id="finderName" class="form-control"></div>
+                            <div><label class="form-label">Elérhetőség</label><input type="text" id="finderContact" class="form-control"></div>
                         </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-8">
-                            <label class="form-label fw-bold">Helyszín *</label>
-                            <input type="text" id="itemLocation" class="form-control" placeholder="pl. Főbejárat aula" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-bold">Dátum</label>
-                            <input type="date" id="itemDate" class="form-control">
-                        </div>
-                    </div>
-
-                    <hr>
-
-                    <div class="form-check form-switch mb-3">
-                        <input class="form-check-input" type="checkbox" id="isEmployee" checked>
-                        <label class="form-check-label" for="isEmployee">A cég dolgozója találta</label>
-                    </div>
-
-                    <div id="finderFields" class="d-none border p-3 rounded bg-light mb-3">
-                        <div class="mb-2">
-                            <label class="form-label">Találó neve</label>
-                            <input type="text" id="finderName" class="form-control">
-                        </div>
-                        <div class="mb-0">
-                            <label class="form-label">Találó elérhetősége / lakcíme</label>
-                            <input type="text" id="finderContact" class="form-control">
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Fénykép készítése/feltöltése</label>
-                        <input type="file" id="fileInput" class="form-control" accept="image/*">
-                    </div>
-
-                    <div id="previewContainer" class="text-center mb-3 d-none">
-                        <p class="small text-muted mb-1">Kép előnézet:</p>
-                        <img id="imgPreview" src="" class="img-fluid rounded border shadow-sm">
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
-                <button type="button" id="btnSave" class="btn btn-primary">
-                    <i class="bi bi-file-earmark-pdf"></i> Mentés és PDF
-                </button>
+                        <div class="mb-3"><label class="form-label">Fotó</label><input type="file" id="fileInput" class="form-control" accept="image/*"></div>
+                        <div id="previewContainer" class="text-center mb-3 d-none"><img id="imgPreview" style="max-height: 150px;" class="rounded border"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btnSave" class="btn btn-primary w-100">Mentés és PDF</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
-
-<div id="qrcode" style="display: none;"></div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-<script type="module" src="app.js"></script>
-
+    <div id="qrcode" style="display:none"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="app.js"></script>
 </body>
 </html>

@@ -11,16 +11,12 @@ class LostAndFoundApp {
     init() {
         this.renderItems();
         this.setupEventListeners();
-        document.getElementById('itemDate').valueAsDate = new Date();
+        if (document.getElementById('itemDate')) {
+            document.getElementById('itemDate').valueAsDate = new Date();
+        }
     }
 
     setupEventListeners() {
-        // Kapcsoló a találó mezőkhöz
-        document.getElementById('isEmployee').addEventListener('change', (e) => {
-            document.getElementById('finderFields').classList.toggle('d-none', e.target.checked);
-        });
-
-        // Képfeldolgozás
         document.getElementById('fileInput').addEventListener('change', async (e) => {
             if (e.target.files[0]) {
                 this.photoBase64 = await Utils.processImage(e.target.files[0]);
@@ -29,8 +25,11 @@ class LostAndFoundApp {
             }
         });
 
-        // Mentés
         document.getElementById('btnSave').addEventListener('click', () => this.saveItem());
+
+        document.getElementById('isEmployee').addEventListener('change', (e) => {
+            document.getElementById('finderFields').classList.toggle('d-none', e.target.checked);
+        });
     }
 
     async saveItem() {
@@ -44,18 +43,17 @@ class LostAndFoundApp {
             location: document.getElementById('itemLocation').value,
             date: document.getElementById('itemDate').value,
             isEmployee: document.getElementById('isEmployee').checked,
-            finderName: document.getElementById('finderName').value || 'Munkavállaló',
-            finderContact: document.getElementById('finderContact').value || '',
+            finderName: document.getElementById('finderName').value,
+            finderContact: document.getElementById('finderContact').value,
             img: this.photoBase64 || 'https://via.placeholder.com/150'
         };
 
-        if (!item.name || !item.location) return alert("Név és helyszín kitöltése kötelező!");
+        if (!item.name || !item.location) return alert("Név és helyszín kötelező!");
 
         Storage.saveItem(item);
         await PDFGenerator.generate(item);
         this.renderItems();
-        
-        // Form alaphelyzetbe
+
         bootstrap.Modal.getInstance(document.getElementById('addItemModal')).hide();
         document.getElementById('addItemForm').reset();
         this.photoBase64 = null;
@@ -68,7 +66,7 @@ class LostAndFoundApp {
         grid.innerHTML = items.map(item => `
             <div class="col">
                 <div class="card h-100 shadow-sm border-0">
-                    <img src="${item.img}" class="card-img-top" style="height:150px; object-fit:contain; background:#fff; padding:5px;">
+                    <img src="${item.img}" class="card-img-top" style="height:150px; object-fit:contain; background:#fff; padding:10px;">
                     <div class="card-body p-3">
                         <small class="text-primary fw-bold">${item.id}</small>
                         <h6 class="fw-bold mb-1">${item.name}</h6>
@@ -77,6 +75,7 @@ class LostAndFoundApp {
                 </div>
             </div>
         `).join('');
+        document.getElementById('itemCount').innerText = items.length;
     }
 }
 

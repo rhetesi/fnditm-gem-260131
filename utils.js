@@ -3,24 +3,17 @@ export const Utils = {
         if (!dateStr) return '';
         return dateStr.replace(/-/g, '. ') + '.';
     },
-
     generateQR: async (text) => {
         return new Promise((resolve) => {
             const qrDiv = document.getElementById("qrcode");
             qrDiv.innerHTML = "";
-            new QRCode(qrDiv, { 
-                text: text, 
-                width: 128, 
-                height: 128, 
-                correctLevel: QRCode.CorrectLevel.M 
-            });
+            new QRCode(qrDiv, { text: text, width: 128, height: 128, correctLevel: QRCode.CorrectLevel.M });
             setTimeout(() => {
                 const img = qrDiv.querySelector("img");
                 resolve(img ? img.src : null);
             }, 250);
         });
     },
-
     processImage: (file) => {
         return new Promise((resolve) => {
             const reader = new FileReader();
