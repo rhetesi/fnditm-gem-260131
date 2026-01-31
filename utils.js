@@ -1,23 +1,26 @@
 export const Utils = {
-    // Dátum formázása: yyyy. MM. dd.
     formatDate: (dateStr) => {
         if (!dateStr) return '';
         return dateStr.replace(/-/g, '. ') + '.';
     },
 
-    // QR kód generálása Image Data URL-ként
     generateQR: async (text) => {
         return new Promise((resolve) => {
-            const qrDiv = document.createElement("div");
-            new QRCode(qrDiv, { text: text, width: 128, height: 128, correctLevel: QRCode.CorrectLevel.M });
+            const qrDiv = document.getElementById("qrcode");
+            qrDiv.innerHTML = "";
+            new QRCode(qrDiv, { 
+                text: text, 
+                width: 128, 
+                height: 128, 
+                correctLevel: QRCode.CorrectLevel.M 
+            });
             setTimeout(() => {
                 const img = qrDiv.querySelector("img");
                 resolve(img ? img.src : null);
-            }, 200);
+            }, 250);
         });
     },
 
-    // Kép előkészítése fehér háttérrel (Canvas)
     processImage: (file) => {
         return new Promise((resolve) => {
             const reader = new FileReader();
