@@ -1,80 +1,67 @@
-:root {
-    --primary-blue: #2b6cb0;
-}
-
 body {
     font-family: 'Roboto', sans-serif;
-    background-color: #f3f4f6;
+    background-color: #f4f7f6;
+    color: #2d3748;
 }
 
 .bg-primary-custom {
-    background-color: var(--primary-blue);
+    background-color: #2b6cb0 !important;
 }
 
-.custom-close {
-    position: absolute;
-    right: -10px;
-    top: -10px;
-    background-color: white;
-    opacity: 1;
-    border-radius: 50%;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    padding: 10px;
+.search-box {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
 }
 
 .card {
     border: none;
     border-radius: 12px;
     overflow: hidden;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: all 0.3s ease;
 }
 
 .card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 20px rgba(0,0,0,0.1) !important;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important;
+}
+
+.card-img-top {
+    height: 180px;
+    object-fit: cover;
+    background-color: #edf2f7;
 }
 
 .status-badge {
     position: absolute;
     top: 12px;
     right: 12px;
-    background-color: var(--primary-blue);
+    background-color: #3182ce;
     color: white;
-    font-size: 0.7rem;
     padding: 3px 12px;
     border-radius: 20px;
-    font-weight: bold;
-    z-index: 10;
-}
-
-.item-id-hex {
-    font-family: monospace;
-    font-size: 0.65rem;
-    color: #94a3b8;
-    letter-spacing: 0.5px;
-}
-
-.tag-badge {
-    background-color: #f1f5f9;
-    color: #475569;
     font-size: 0.7rem;
-    font-weight: normal;
-    padding: 4px 8px;
-    margin-right: 4px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.item-id-tag {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.65rem;
+    color: #a0aec0;
+    background: #f7fafc;
+    padding: 2px 6px;
     border-radius: 4px;
 }
 
-.btn-issue {
-    background: transparent;
-    border: 1px solid #e2e8f0;
-    font-size: 0.8rem;
-    width: 100%;
-    margin-top: 10px;
-    transition: all 0.2s;
+.tag-pill {
+    background-color: #f1f5f9;
+    color: #475569;
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 6px;
+    margin-right: 4px;
 }
 
-.btn-issue:hover {
-    background: #f8fafc;
-    border-color: var(--primary-blue);
-    color: var(--primary-blue);
+.border-dashed {
+    border: 2px dashed #cbd5e0 !important;
 }
