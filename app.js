@@ -1,212 +1,201 @@
-// --- KONFIGURÁCIÓ ÉS MINTADATOK ---
-const LOCATIONS = ["Főépület", "Uszoda", "Kert", "Öltöző", "Garázs"];
-const USERS = [
-    { email: "admin@system.hu", pass: "admin123", name: "Admin Béla", role: "admin" },
-    { email: "user@system.hu", pass: "user123", name: "Kezelő Kata", role: "user" }
-];
-
-// --- FŐ ALKALMAZÁS LOGIKA ---
-class LostAndFoundApp {
+class LostAndFoundSystem {
     constructor() {
-        this.items = JSON.parse(localStorage.getItem('lf_items')) || this.loadSeedData();
-        this.currentUser = JSON.parse(sessionStorage.getItem('lf_user')) || null;
-        this.activeIssueId = null;
-        
+        this.items = JSON.parse(localStorage.getItem('lostItems')) || [];
+        this.photoBase64 = null;
         this.init();
     }
 
     init() {
         this.renderItems();
         this.setupEventListeners();
-        this.checkAuthUI();
-        this.startInactivityTimer();
-    }
-
-    loadSeedData() {
-        return [
-            { id: "697E0061F28761A8", name: "Piros úszóshort", date: "2026-01-31", location: "Uszoda", tags: ["polyester", "Champion"], status: "Aktív", creator: "admin@system.hu" },
-            { id: "697E05624155FD7F", name: "Samsung okosóra", date: "2026-01-31", location: "Öltöző", tags: ["fém", "ezüst"], status: "Aktív", creator: "user@system.hu" },
-            { id: "697B781F52740ECF", name: "Férfi karóra", date: "2026-01-29", location: "Főépület", tags: ["Casio", "kerek"], status: "Aktív", creator: "admin@system.hu" }
-        ];
-    }
-
-    // --- MEGJELENÍTÉS ---
-    renderItems() {
-        const grid = document.getElementById('itemGrid');
-        const fName = document.getElementById('fName').value.toLowerCase();
-        const fLoc = document.getElementById('fLocation').value.toLowerCase();
+        this.setupCamera();
         
-        const filtered = this.items.filter(item => 
-            item.status === "Aktív" &&
-            item.name.toLowerCase().includes(fName) &&
-            item.location.toLowerCase().includes(fLoc)
-        );
-
-        document.getElementById('itemCount').innerText = filtered.length;
-        grid.innerHTML = '';
-
-        filtered.forEach(item => {
-            const card = document.createElement('div');
-            card.className = 'col';
-            card.innerHTML = `
-                <div class="card h-100 shadow-sm p-2">
-                    <span class="status-badge">Aktív</span>
-                    <img src="https://via.placeholder.com/300x200?text=${item.name}" class="card-img-top rounded mb-2">
-                    <div class="card-body p-1">
-                        <div class="item-id-hex mb-1">${item.id}</div>
-                        <h6 class="fw-bold mb-1">${item.name}</h6>
-                        <p class="text-muted small mb-2">${item.date.replace(/-/g, '. ')}.</p>
-                        <div class="mb-2">
-                            ${item.tags.map(t => `<span class="tag-badge">${t}</span>`).join('')}
-                        </div>
-                        ${this.currentUser?.role === 'admin' ? `<div class="small text-primary mb-2">Rögzítő: ${item.creator}</div>` : ''}
-                        <button class="btn btn-issue" onclick="app.openIssueModal('${item.id}')">Kiadás indítása</button>
-                    </div>
-                </div>
-            `;
-            grid.appendChild(card);
-        });
-    }
-
-    // --- FUNKCIÓK ---
-    saveItem() {
-        const name = document.getElementById('itemName').value;
-        if(!name) return alert("Név kötelező!");
-
-        const newItem = {
-            id: Math.random().toString(16).toUpperCase().substring(2, 18),
-            name: name,
-            location: document.getElementById('itemLocation').value,
-            date: document.getElementById('itemDate').value || new Date().toISOString().split('T')[0],
-            tags: document.getElementById('itemTags').value.split(',').map(t => t.trim()),
-            status: "Aktív",
-            creator: this.currentUser?.email || "Rendszer"
-        };
-
-        this.items.unshift(newItem);
-        localStorage.setItem('lf_items', JSON.stringify(this.items));
-        this.generatePDF(newItem);
-        
-        bootstrap.Modal.getInstance(document.getElementById('addModal')).hide();
-        this.renderItems();
-    }
-
-    generatePDF(item) {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        
-        doc.setFont("helvetica", "bold");
-        doc.text("NYILVÁNTARTÓ LAP - " + item.id, 25, 20);
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "normal");
-        doc.text(`Tárgy: ${item.name}`, 25, 30);
-        doc.text(`Helyszín: ${item.location}`, 25, 35);
-        doc.text(`Dátum: ${item.date}`, 25, 40);
-        
-        doc.setLineDashPattern([2, 2], 0);
-        doc.line(10, 80, 200, 80); // Szaggatott vonal
-        
-        doc.text("Átvételi elismervény (Ügyfél példány)", 25, 90);
-        
-        doc.save(`atvetel_${item.id}.pdf`);
-    }
-
-    // --- KIADÁS FOLYAMAT ---
-    openIssueModal(id) {
-        this.activeIssueId = id;
-        const item = this.items.find(i => i.id === id);
-        document.getElementById('issueItemTitle').innerText = item.name;
-        document.getElementById('issueAuthSection').classList.remove('d-none');
-        document.getElementById('issueFormSection').classList.add('d-none');
-        new bootstrap.Modal(document.getElementById('issueModal')).show();
-    }
-
-    verifyIssuer() {
-        const email = document.getElementById('issueEmail').value;
-        const pass = document.getElementById('issuePass').value;
-        const user = USERS.find(u => u.email === email && u.pass === pass);
-
-        if(user) {
-            this.currentUser = user;
-            sessionStorage.setItem('lf_user', JSON.stringify(user));
-            this.checkAuthUI();
-            document.getElementById('issueAuthSection').classList.add('d-none');
-            document.getElementById('issueFormSection').classList.remove('d-none');
-        } else {
-            alert("Hibás adatok!");
-        }
-    }
-
-    finalizeIssue() {
-        if(!document.getElementById('legalAgree').checked) return alert("Elfogadás kötelező!");
-        
-        const index = this.items.findIndex(i => i.id === this.activeIssueId);
-        this.items[index].status = "Kiadott";
-        localStorage.setItem('lf_items', JSON.stringify(this.items));
-        
-        bootstrap.Modal.getInstance(document.getElementById('issueModal')).hide();
-        this.renderItems();
-        alert("Tárgy sikeresen kiadva és archiválva.");
-    }
-
-    // --- AUTH & SEGÉD ---
-    checkAuthUI() {
-        const btn = document.getElementById('authBtn');
-        const badge = document.getElementById('userBadge');
-        if(this.currentUser) {
-            btn.innerText = "Kijelentkezés";
-            badge.innerText = `${this.currentUser.name} (${this.currentUser.role})`;
-        } else {
-            btn.innerText = "Bejelentkezés";
-            badge.innerText = "";
-        }
-    }
-
-    toggleLogin() {
-        if(this.currentUser) {
-            sessionStorage.removeItem('lf_user');
-            location.reload();
-        } else {
-            // Egyszerűsített login
-            this.currentUser = USERS[0]; // Admin beléptetés teszthez
-            sessionStorage.setItem('lf_user', JSON.stringify(this.currentUser));
-            this.checkAuthUI();
-            this.renderItems();
-        }
-    }
-
-    startInactivityTimer() {
-        let time;
-        const reset = () => {
-            clearTimeout(time);
-            time = setTimeout(() => {
-                alert("Munkamenet lejárt inaktivitás miatt.");
-                sessionStorage.removeItem('lf_user');
-                location.reload();
-            }, 120000); // 2 perc
-        };
-        window.onload = reset;
-        document.onmousemove = reset;
-        document.onkeypress = reset;
+        // Mai dátum beállítása alapértelmezettnek
+        document.getElementById('itemDate').valueAsDate = new Date();
     }
 
     setupEventListeners() {
-        ['fName', 'fLocation'].forEach(id => {
-            document.getElementById(id).addEventListener('input', () => this.renderItems());
-        });
-        
+        // Cég dolgozója kapcsoló
         document.getElementById('isEmployee').addEventListener('change', (e) => {
-            document.getElementById('finderDetails').classList.toggle('d-none', e.target.checked);
+            document.getElementById('finderFields').classList.toggle('d-none', e.target.checked);
         });
+
+        // Fájl feltöltés
+        document.getElementById('fileInput').addEventListener('change', (e) => this.handleFileUpload(e));
+
+        // Mentés gomb
+        document.getElementById('btnSave').addEventListener('click', () => this.saveItem());
+
+        // Szűrők
+        ['filterName', 'filterLocation'].forEach(id => {
+            document.getElementById(id).addEventListener('input', () => this.filterItems());
+        });
+
+        // Fotó reset
+        document.getElementById('btnResetPhoto').addEventListener('click', () => this.resetPhoto());
+    }
+
+    // --- KAMERA ÉS FOTÓ KEZELÉS ---
+    async setupCamera() {
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const btnStart = document.getElementById('btnStartCamera');
+        const btnCapture = document.getElementById('btnCapture');
+
+        btnStart.addEventListener('click', async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "environment" }, 
+                    audio: false 
+                });
+                video.srcObject = stream;
+                document.getElementById('videoContainer').classList.remove('d-none');
+                btnStart.classList.add('active');
+            } catch (err) {
+                alert("Nem sikerült elérni a kamerát: " + err.message);
+            }
+        });
+
+        btnCapture.addEventListener('click', () => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+            
+            // Tömörített JPG készítése (0.6 minőség a LocalStorage kímélése érdekében)
+            this.photoBase64 = canvas.toDataURL('image/jpeg', 0.6);
+            this.showPreview();
+            this.stopCamera();
+        });
+    }
+
+    stopCamera() {
+        const video = document.getElementById('video');
+        if (video.srcObject) {
+            video.srcObject.getTracks().forEach(track => track.stop());
+        }
+        document.getElementById('videoContainer').classList.add('d-none');
+    }
+
+    handleFileUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            // Kép betöltése canvas-ra átméretezéshez (opcionális, de ajánlott)
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.getElementById('canvas');
+                const ctx = canvas.getContext('2d');
+                // Fix max szélesség a tároláshoz
+                const maxW = 800;
+                const scale = maxW / img.width;
+                canvas.width = maxW;
+                canvas.height = img.height * scale;
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                
+                this.photoBase64 = canvas.toDataURL('image/jpeg', 0.6);
+                this.showPreview();
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    showPreview() {
+        document.getElementById('imgPreview').src = this.photoBase64;
+        document.getElementById('previewContainer').classList.remove('d-none');
+        document.getElementById('videoContainer').classList.add('d-none');
+    }
+
+    resetPhoto() {
+        this.photoBase64 = null;
+        document.getElementById('previewContainer').classList.add('d-none');
+        document.getElementById('fileInput').value = '';
+    }
+
+    // --- ADATKEZELÉS ---
+    saveItem() {
+        const name = document.getElementById('itemName').value;
+        const location = document.getElementById('itemLocation').value;
+        const date = document.getElementById('itemDate').value;
+
+        if (!name || !location || !date) {
+            alert("Minden kötelező (*) mezőt töltsön ki!");
+            return;
+        }
+
+        const newItem = {
+            id: 'ITM-' + Date.now().toString(36).toUpperCase(),
+            name,
+            location,
+            date,
+            time: document.getElementById('itemTime').value,
+            isEmployee: document.getElementById('isEmployee').checked,
+            finder: {
+                name: document.getElementById('finderName').value,
+                contact: document.getElementById('finderContact').value
+            },
+            img: this.photoBase64 || 'https://via.placeholder.com/300x200?text=Nincs+fotó',
+            status: 'Aktív',
+            tags: [location, name.split(' ')[0]]
+        };
+
+        this.items.unshift(newItem);
+        localStorage.setItem('lostItems', JSON.stringify(this.items));
+        
+        this.renderItems();
+        this.resetForm();
+        
+        // Modal bezárása (Bootstrap 5)
+        bootstrap.Modal.getInstance(document.getElementById('addItemModal')).hide();
+    }
+
+    resetForm() {
+        document.getElementById('addItemForm').reset();
+        this.resetPhoto();
+        document.getElementById('itemDate').valueAsDate = new Date();
+    }
+
+    renderItems(data = this.items) {
+        const grid = document.getElementById('itemGrid');
+        const count = document.getElementById('itemCount');
+        grid.innerHTML = '';
+        count.innerText = data.length;
+
+        data.forEach(item => {
+            grid.innerHTML += `
+                <div class="col">
+                    <div class="card h-100 shadow-sm">
+                        <span class="status-badge">Aktív</span>
+                        <img src="${item.img}" class="card-img-top" alt="tárgy">
+                        <div class="card-body p-3">
+                            <div class="mb-2"><span class="item-id-tag">${item.id}</span></div>
+                            <h6 class="card-title fw-bold mb-1">${item.name}</h6>
+                            <p class="text-muted small mb-2"><i class="bi bi-calendar3 me-1"></i> ${item.date.replace(/-/g, '. ')}</p>
+                            <div class="d-flex flex-wrap gap-1">
+                                ${item.tags.map(t => `<span class="tag-pill">${t}</span>`).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    filterItems() {
+        const nameQuery = document.getElementById('filterName').value.toLowerCase();
+        const locQuery = document.getElementById('filterLocation').value.toLowerCase();
+
+        const filtered = this.items.filter(item => 
+            item.name.toLowerCase().includes(nameQuery) && 
+            item.location.toLowerCase().includes(locQuery)
+        );
+        this.renderItems(filtered);
     }
 }
 
-// UI segéd
-const uiManager = {
-    openAddModal: () => {
-        document.getElementById('itemDate').valueAsDate = new Date();
-        new bootstrap.Modal(document.getElementById('addModal')).show();
-    }
-};
-
-const app = new LostAndFoundApp();
+document.addEventListener('DOMContentLoaded', () => {
+    new LostAndFoundSystem();
+});
