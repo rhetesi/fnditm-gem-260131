@@ -11,9 +11,7 @@ class LostAndFoundApp {
     init() {
         this.renderItems();
         this.setupEventListeners();
-        if (document.getElementById('itemDate')) {
-            document.getElementById('itemDate').valueAsDate = new Date();
-        }
+        document.getElementById('itemDate').valueAsDate = new Date();
     }
 
     setupEventListeners() {
@@ -26,7 +24,7 @@ class LostAndFoundApp {
         });
 
         document.getElementById('btnSave').addEventListener('click', () => this.saveItem());
-
+        
         document.getElementById('isEmployee').addEventListener('change', (e) => {
             document.getElementById('finderFields').classList.toggle('d-none', e.target.checked);
         });
@@ -43,9 +41,10 @@ class LostAndFoundApp {
             location: document.getElementById('itemLocation').value,
             date: document.getElementById('itemDate').value,
             isEmployee: document.getElementById('isEmployee').checked,
-            finderName: document.getElementById('finderName').value,
-            finderContact: document.getElementById('finderContact').value,
-            img: this.photoBase64 || 'https://via.placeholder.com/150'
+            finderName: document.getElementById('finderName').value || 'Munkavállaló',
+            finderContact: document.getElementById('finderContact').value || '',
+            img: this.photoBase64 || 'https://via.placeholder.com/150',
+            creatorName: 'Rendszergazda'
         };
 
         if (!item.name || !item.location) return alert("Név és helyszín kötelező!");
@@ -53,7 +52,7 @@ class LostAndFoundApp {
         Storage.saveItem(item);
         await PDFGenerator.generate(item);
         this.renderItems();
-
+        
         bootstrap.Modal.getInstance(document.getElementById('addItemModal')).hide();
         document.getElementById('addItemForm').reset();
         this.photoBase64 = null;
@@ -75,7 +74,6 @@ class LostAndFoundApp {
                 </div>
             </div>
         `).join('');
-        document.getElementById('itemCount').innerText = items.length;
     }
 }
 
